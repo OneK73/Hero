@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium Access</title>
+    <style>
+        body { font-family: sans-serif; background: #f4f4f4; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { background: white; padding: 25px; border-radius: 15px; width: 90%; max-width: 380px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; }
+        .wa-btn { display: none; background: #25D366; color: white; padding: 14px; border-radius: 8px; margin-top: 15px; text-decoration: none; font-weight: bold; display: none; }
+        #status { margin-top: 15px; font-size: 14px; color: #555; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Premium Access</h2>
+    <p>Pay <b>KES 2,000</b> to unlock</p>
+
+    <input type="text" id="phone" placeholder="2547XXXXXXXX">
+    <div id="payHeroContainer"></div>
+    <p id="status"></p>
+
+    <a id="wa-link" class="wa-btn" href="/join">
+        CLICK TO JOIN WHATSAPP
+    </a>
+</div>
+
+<script src="https://applet.payherokenya.com/cdn/button_sdk.js?v=3.1"></script>
+
+<script>
+    // 1. Generate a Unique Reference for this session
+    const currentReference = "VIP_" + Date.now();
+    const statusElement = document.getElementById("status");
+    const waLink = document.getElementById("wa-link");
+    const phoneInput = document.getElementById("phone");
+
+    // 2. Initialize PayHero
+    PayHero.init({
+        paymentUrl: "https://lipwa.link/7717",
+        width: "100%",
+        height: "60px", // Adjusted height for the button
+        containerId: "payHeroContainer",
+        channelID: 100,
+        amount: 1, // Matching your text
+        reference: currentReference,
+        buttonName: "Pay Now KES 2000",
+        buttonColor: "#00a884",
+        callbackUrl: "https://hero-kro9.onrender.com//payment/callback"
+    });
+
+    // 3. Payment Polling Logic
+    function startPolling(reference) {
+        statusElement.innerText = "Waiting for M-Pesa confirmation...";
+        
+        const interval = setInterval(async () => {
+            try {
+                // We check by REFERENCE because phone numbers can be reused, 
+                // but References are unique to this specific click.
+                const res = await fetch(`https://hero-kro9.onrender.com//payment/status/${reference}`);
+                const data = await res.json();
+
+                if (data.status === "paid") {
+                    clearInterval(interval);
+                    statusElement.style.color = "green";
+                    statusElement.innerText = "✅ Payment confirmed!";
+                    waLink.style.display = "block"; // Show the WhatsApp button
+                    
+                    // Optional: Auto-redirect after 2 seconds
+                    setTimeout(() => {
+                        window.location.href = "/join";
+                    }, 2000);
+                }
+            } catch (e) {
+                console.error("Polling error:", e);
+            }
+        }, 3000);
+    }
+
+    // 4. Trigger Polling
+    // Since the SDK creates an iframe, we listen for a click on the container.
+    // When the user clicks the button, we start checking the backend.
+    document.getElementById("payHeroContainer").addEventListener("click", () => {
+        if (!phoneInput.value) {
+            alert("Please enter your phone number in the field above first.");
+            return;
+        }
+        startPolling(currentReference);
+    });
+</script>
+
+</body>
+</html>
