@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Join Premium Group</title>
+    <style>
+        body { font-family: sans-serif; background: #f4f4f4; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 90%; max-width: 350px; text-align: center; }
+        input { width: 100%; padding: 12px; margin: 15px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        button { width: 100%; padding: 12px; background: #007bff; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .wa-btn { display: none; background: #25D366; text-decoration: none; color: white; padding: 15px; border-radius: 8px; margin-top: 20px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>Premium Access</h2>
+        <p>Pay <b>Ksh 2,000</b> to join the group.</p>
+        
+        <div id="pay-section">
+            <input type="number" id="phone" placeholder="2547XXXXXXXX">
+            <button onclick="payNow()" id="btn-text">Pay Now</button>
+        </div>
+
+        <p id="status"></p>
+        <a href="/join" id="wa-link" class="wa-btn">CLICK TO JOIN WHATSAPP</a>
+    </div>
+
+    <script>
+        async function payNow() {
+            const phone = document.getElementById('phone').value;
+            const status = document.getElementById('status');
+            const btn = document.getElementById('btn-text');
+
+            if(!phone) return alert("Enter phone number");
+
+            status.innerText = "Sending M-Pesa prompt...";
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/payment/checkout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone })
+                });
+
+                const data = await res.json();
+
+                if(data.success) {
+                    status.style.color = "green";
+                    status.innerText = "Prompt sent! Enter PIN on your phone, then click below:";
+                    document.getElementById('pay-section').style.display = "none";
+                    document.getElementById('wa-link').style.display = "block";
+                } else {
+                    status.innerText = "Error initiating payment.";
+                    btn.disabled = false;
+                }
+            } catch (e) {
+                status.innerText = "Connection error.";
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
