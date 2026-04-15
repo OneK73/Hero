@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Premium Access Payment</title>
+
+<style>
+body {
+    font-family: 'Segoe UI', sans-serif;
+    display: flex;
+    justify-content: center;
+    padding: 50px;
+    background: #f4f7f6;
+}
+.card {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 400px;
+}
+input {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+}
+button {
+    width: 100%;
+    padding: 12px;
+    background: #007bff;
+    color: white;
+    border: none;
+}
+#status { margin-top: 15px; }
+.hidden { display: none; }
+</style>
+</head>
+
+<body>
+
+<div class="card">
+    <h2>Unlock Premium Content</h2>
+    <p>Amount: <b>KES 10</b></p>
+
+    <input type="text" id="phone" placeholder="2547XXXXXXXX">
+    <button onclick="pay()" id="btn">Pay with M-PESA</button>
+
+    <div id="status" class="hidden">Processing...</div>
+</div>
+
+<script>
+const orderId = "ORD-" + Math.random().toString(36).substr(2, 9);
+
+async function pay() {
+    const phone = document.getElementById('phone').value;
+    const btn = document.getElementById('btn');
+    const status = document.getElementById('status');
+
+    if (!phone) return alert("Enter phone number");
+
+    btn.disabled = true;
+    status.classList.remove("hidden");
+
+    await fetch('/pay', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone, orderId })
+    });
+
+    status.innerText = "STK sent. Enter PIN...";
+
+    const interval = setInterval(async () => {
+        const res = await fetch('/check?id=' + orderId);
+        const data = await res.json();
+
+        if (data.paid === true) {
+            clearInterval(interval);
+            status.innerText = "Payment successful! Redirecting...";
+
+            setTimeout(() => {
+                window.location.href = "https://chat.whatsapp.com/Dzi10y9fnzYDcViTx2jzgy?mode=gi_t";
+            }, 1500);
+        }
+
+        if (data.paid === false) {
+            clearInterval(interval);
+            status.innerText = "Payment failed ❌";
+        }
+
+    }, 3000);
+}
+</script>
+
+</body>
+</html>
